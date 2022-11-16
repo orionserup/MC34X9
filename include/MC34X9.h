@@ -19,31 +19,17 @@
    @see     http://www.mcubemems.com
 */
 
+#pragma once
 #ifndef MC34X9_h
 #define MC34X9_h
 
+#include <stdint.h>
+#include <stddef.h>
 
 /******************************************************************************
  *** INFORMATION
  *****************************************************************************/
 #define M_DRV_MC34X9_VERSION    "1.0.0"
-
-#include "Arduino.h"
-
-#include <Wire.h> // I2C header file
-#include <SPI.h> // SPI header file
-
-//SPI pin definition
-//SS  : SCS, Active-low CS�Xchip select
-//MOSI: SDA ICSP-4, MOSI�Xmaster out slave in
-//MISO: SDO ICSP-1, MISO�Xmaster in slave out
-//SCK : SCL ICSP-3, SCK - SPI clock
-// pins used for the connection with the sensor
-// other information you can refer to the Arduino SPI library
-
-/******************************************************************************
- *** CONFIGURATION
- *****************************************************************************/
 
 /******************************************************************************
 *** Motion threshold and debounce config
@@ -142,7 +128,7 @@
 #define s_bCfgFTThr 200
 #define s_bCfgFTDebounce 50
 
-struct MC34X9_acc_t
+typedef struct MC34X9ACCEL
 {
   short XAxis;
   short YAxis;
@@ -150,26 +136,26 @@ struct MC34X9_acc_t
   float XAxis_g;
   float YAxis_g;
   float ZAxis_g;
-} ;
+} MC34X9Accel;
 
-typedef enum
+typedef enum MC34X9GAIN
 {
   MC34X9_GAIN_5_24X      = 0b0011,
   MC34X9_GAIN_3_89X      = 0b0010,
   MC34X9_GAIN_DEFAULT_1X = 0b0000,
   MC34X9_GAIN_0_5X       = 0b0100,
   MC34X9_GAIN_0_33X      = 0b1100,
-}   MC34X9_gain_t;
+}   MC34X9Gain;
 
-typedef enum
+typedef enum MC34X9MODE
 {
   MC34X9_MODE_SLEEP    = 0b000,
   MC34X9_MODE_CWAKE      = 0b001,
   MC34X9_MODE_RESERVED   = 0b010,
   MC34X9_MODE_STANDBY  = 0b011,
-}   MC34X9_mode_t;
+}   MC34X9Mode;
 
-typedef enum
+typedef enum MC34X9RANGE
 {
   MC34X9_RANGE_2G    = 0b000,
   MC34X9_RANGE_4G    = 0b001,
@@ -177,9 +163,9 @@ typedef enum
   MC34X9_RANGE_16G   = 0b011,
   MC34X9_RANGE_12G   = 0b100,
   MC34X9_RANGE_END,
-}   MC34X9_range_t;
+}   MC34X9Range;
 
-typedef enum
+typedef enum MC34X9SAMPLERATE
 {
   MC34X9_SR_25Hz            = 0x10,
   MC34X9_SR_50Hz            = 0x11,
@@ -190,38 +176,38 @@ typedef enum
   MC34X9_SR_500Hz           = 0x16,
   MC34X9_SR_DEFAULT_1000Hz  = 0x17,
   MC34X9_SR_END,
-}   MC34X9_sr_t;
+}   MC34X9SampleRate;
 
-typedef enum
+typedef enum MC34X9MOTIONFEATURE
 {
   MC34X9_TILT_FEAT = 0,
   MC34X9_ANYM_FEAT = 2,
   MC34X9_SHAKE_FEAT = 3,
   MC34X9_TILT35_FEAT = 4,
-}   MC34X9_motion_feature_t;
+}   MC34X9MotionFeature;
 
-typedef enum
+typedef enum MC34X9FIFOCONTROL
 {
   MC34X9_FIFO_CTL_DISABLE = 0,
   MC34X9_FIFO_CTL_ENABLE,
   MC34X9_FIFO_CTL_END,
-}   MC34X9_fifo_ctl_t;
+}   MC34X9FIFOControl;
 
-typedef enum
+typedef enum MC34X9FIFOMODE
 {
   MC34X9_FIFO_MODE_NORMAL = 0,
   MC34X9_FIFO_MODE_WATERMARK,
   MC34X9_FIFO_MODE_END,
-}   MC34X9_fifo_mode_t;
+}   MC34X9FIFOMode;
 
-typedef enum
+typedef enum MC34X9FIFOInt
 {
   MC34X9_COMB_INT_DISABLE = 0,
   MC34X9_COMB_INT_ENABLE,
   MC34X9_COMB_INT_END,
-}   MC34X9_fifo_int_t;
+}   MC34X9FIFOInt;
 
-typedef struct
+typedef struct MC34X9INTEVENT
 {
   uint8_t    bTILT;
   uint8_t    bFLIP;
@@ -231,95 +217,17 @@ typedef struct
   uint8_t    bRESV;
   uint8_t 	 bAUTO_CLR;
   uint8_t    bACQ;
-}   MC34X9_interrupt_event_t;
+}   MC34X9IntEvent;
 
-typedef struct
+typedef struct MC34X9FIFOIntEvent
 {
   uint8_t    bFIFO_EMPTY;
   uint8_t    bFIFO_FULL;
   uint8_t    bFIFO_THRESH;
-}   MC34X9_fifo_interrupt_event_t;
-
-/* general accel methods */
-class MC34X9 {
-  public:
-    uint8_t readRegister8(uint8_t reg);
-    void writeRegister8(uint8_t reg, uint8_t value);
-    // Setup and begin measurements
-    bool start(bool bSpi, uint8_t chip_select);
-    // Start measurement
-    void wake();
-    // End measurement
-    void stop();
-    // Sensor reset
-    void reset();
-    void SetMode(MC34X9_mode_t mode);
-    void SetRangeCtrl(MC34X9_range_t range);
-    void SetSampleRate(MC34X9_sr_t sample_rate);
-    void SetFIFOCtrl(MC34X9_fifo_ctl_t fifo_ctl,
-                     MC34X9_fifo_mode_t fifo_mode,
-                     uint8_t fifo_thr);
-    void SetMotionCtrl(bool tilt_int_ctrl,
-                       bool flip_int_ctl,
-                       bool anym_int_ctl,
-                       bool shake_int_ctl,
-                       bool tilt_35_int_ctl);
-    void SetINTCtrl(bool tilt_int_ctrl,
-                    bool flip_int_ctl,
-                    bool anym_int_ctl,
-                    bool shake_int_ctl,
-                    bool tilt_35_int_ctl);
-    void SetFIFOINTCtrl(bool fifo_empty_int_ctl,
-                        bool fifo_full_int_ctl,
-                        bool fifo_thr_int_ctl);
-    void SetGerneralINTCtrl();
-    void INTHandler(MC34X9_interrupt_event_t *ptINT_Event);
-    void FIFOINTHandler(MC34X9_fifo_interrupt_event_t *ptFIFO_INT_Event);
-    MC34X9_range_t GetRangeCtrl(void);
-    MC34X9_sr_t GetSampleRate(void);
-    bool IsFIFOEmpty(void);
-    MC34X9_acc_t readRawAccel(void);
-
-  private:
-    bool M_bSpi;
-    uint8_t M_chip_select;
-    short x, y, z;
-    // Raw Accelerometer data
-    MC34X9_acc_t AccRaw;
-};
-
-// ***I2C/SPI BUS***
-// Use object to do Bus communication
-extern MC34X9 MC34X9_acc;
-#define MC34X9_acc_readRegister8(reg) \
-        MC34X9_acc.readRegister8(reg);
-
-#define MC34X9_acc_writeRegister8(reg, value) \
-        MC34X9_acc.writeRegister8(reg, value);
-typedef enum
-{
-  /** SPI run under 2MHz when normal mode enable. */
-  E_M_DRV_INTERFACE_SPIMODE_NORMAL = 0,
-  /** SPI bus could over 2MHz after enable high speed mode. */
-  E_M_DRV_INTERFACE_SPIMODE_HS,
-  E_M_DRV_INTERFACE_SPIMODE_END,
-}   e_m_drv_interface_spimode_t;
-
-// Bus Protocol init
-int m_drv_i2c_init(void);
-int m_drv_spi_init(e_m_drv_interface_spimode_t spi_hs_mode);
-
-// Bus function
-uint8_t mcube_write_regs(bool bSpi, uint8_t chip_select, uint8_t reg, \
-                         uint8_t *value, uint8_t size);
-uint8_t mcube_read_regs( bool bSpi, uint8_t chip_select, uint8_t reg, \
-                         uint8_t *value, uint8_t size);
-
-uint8_t _readRegister8(bool bSpi, uint8_t chip_select, uint8_t reg);
-void _writeRegister8(bool bSpi, uint8_t chip_select, uint8_t reg, uint8_t value);
+}   MC34X9FIFOIntEvent;
 
 // ***MC34X9 dirver motion part***
-typedef enum
+typedef enum MC34X9TIMER35TILTDURATION
 {
   MC34X9_TILT35_1p6           = 0b000,
   MC34X9_TILT35_1p8           = 0b001,
@@ -329,19 +237,322 @@ typedef enum
   MC34X9_TILT35_2p6           = 0b101,
   MC34X9_TILT35_2p8           = 0b110,
   MC34X9_TILT35_3p0           = 0b111
-} MC34X9_TILT35_DURATION_TIMER_t;
+} MC34X9Tilt35TimerDuration;
 
-void M_DRV_MC34X6_SetTFThreshold(uint16_t threshold);
-void M_DRV_MC34X6_SetTFDebounce(uint8_t debounce);
-void M_DRV_MC34X6_SetANYMThreshold(uint16_t threshold);
-void M_DRV_MC34X6_SetANYMDebounce(uint8_t debounce);
-void M_DRV_MC34X6_SetShakeThreshold(uint16_t threshold);
-void M_DRV_MC34X6_SetShake_P2P_DUR_THRESH(uint16_t threshold, uint8_t shakeCount);
-void M_DRV_MC34X6_SetTILT35Threshold(uint16_t threshold);
-void M_DRV_MC34X6_SetTILT35Timer(uint8_t timer);
+typedef enum MC34X9Type {
 
-void _M_DRV_MC34X6_SetTilt_Flip();
-void _M_DRV_MC34X6_SetAnym();
-void _M_DRV_MC34X6_SetShake();
-void _M_DRV_MC34X6_SetTilt35();
+  MC3419
+
+} MC34X9Type;
+
+typedef struct MC34X9CONFIG {
+
+  uint16_t (*read_reg)(const uint8_t s_addr, const uint8_t reg_addr, void* const buffer, const uint16_t size);
+  uint16_t (*write_reg)(const uint8_t s_addr, const uint8_t reg_addr, const void* const buffer, const uint16_t size);
+
+  bool address_6;
+  MC34X9Type type;
+
+} MC34X9Config;
+
+typedef struct MC34X9 {
+
+  MC34X9Config config;
+  uint8_t address;
+  MC34X9Type type;
+  MC34X9Accel acceleration;
+  MC34X9Mode mode;
+
+} MC34X9;
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param config
+ * \return MC34X9* 
+ */
+MC34X9* MC34X9Init(MC34X9* const dev, const MC34X9Config* const config);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param address
+ * \param data
+ * \return uint16_t 
+ */
+uint16_t MC34X9Write8(MC34X9* const dev, const uint8_t address, const uint8_t data);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param address
+ * \return uint8_t 
+ */
+uint8_t MC34X9Read8(MC34X9* const dev, const uint8_t address);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \return uint16_t 
+ */
+uint16_t MC34X9Start(MC34X9* const dev);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \return uint16_t 
+ */
+uint16_t MC34X9Wake(MC34X9* const dev);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \return uint16_t 
+ */
+uint16_t MC34X9Stop(MC34X9* const dev);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \return uint16_t 
+ */
+uint16_t MC34X9Reset(MC34X9* const dev);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param mode
+ * \return uint16_t 
+ */
+uint16_t MC3479SetMode(MC34X9* const dev, MC34X9Mode mode);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param range
+ * \return uint16_t 
+ */
+uint16_t MC34X9SetRangeCtrl(MC34X9* const dev, MC34X9Range range);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param sample_rate
+ * \return uint16_t 
+ */
+uint16_t MC34X9SetSampleRate(MC34X9* const dev, MC34X9SampleRate sample_rate);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param fifo_ctl
+ * \param fifo_mode
+ * \param fifo_thr
+ * \return uint16_t 
+ */
+uint16_t MC34X9SetFIFOCtrl(MC34X9* const dev, MC34X9FIFOControl fifo_ctl, MC34X9FIFOMode fifo_mode, uint8_t fifo_thr);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param tilt_int_ctrl
+ * \param flip_int_ctl
+ * \param anym_int_ctl
+ * \param shake_int_ctl
+ * \param tilt_35_int_ctl
+ * \return uint16_t 
+ */
+uint16_t MC34X9SetMotionCtrl(MC34X9* const dev, const bool tilt_int_ctrl, const bool flip_int_ctl,
+                        const bool anym_int_ctl, const bool shake_int_ctl,
+                        const bool tilt_35_int_ctl);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param tilt_int_ctrl
+ * \param flip_int_ctl
+ * \param anym_int_ctl
+ * \param shake_int_ctl
+ * \param tilt_35_int_ctl
+ * \return uint16_t 
+ */
+uint16_t MC34X9SetINTCtrl(MC34X9* const dev, const bool tilt_int_ctrl, const bool flip_int_ctl,
+                              const bool anym_int_ctl, const bool shake_int_ctl,
+                              const bool tilt_35_int_ctl);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param fifo_empty_int_ctl
+ * \param fifo_full_int_ctl
+ * \param fifo_thr_int_ctl
+ * \return uint16_t 
+ */
+uint16_t MCSetFIFOINTCtrl(MC34X9* const dev, const bool fifo_empty_int_ctl, const bool fifo_full_int_ctl, const bool fifo_thr_int_ctl);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \return uint16_t 
+ */
+uint16_t MC34X9SetGerneralINTCtrl(MC34X9* const dev);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param ptINT_Event
+ * \return uint16_t 
+ */
+uint16_t MC34X9INTHandler(MC34X9* const dev, MC34X9IntEvent* const ptINT_Event);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param ptFIFO_INT_Event
+ * \return uint16_t 
+ */
+uint16_t MC34X9FIFOINTHandler(MC34X9* const dev, MC34X9FIFOIntEvent* const ptFIFO_INT_Event);
+
+/**
+ * \brief Get the Range Ctrl object
+ * 
+ * \param dev
+ * \return MC34X9Range 
+ */
+MC34X9Range MC34X9GetRangeCtrl(MC34X9* const dev);
+
+/**
+ * \brief Get the Sample Rate object
+ * 
+ * \param dev
+ * \return MC34X9SampleRate 
+ */
+MC34X9SampleRate MC34X9GetSampleRate(MC34X9* const dev);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \return true 
+ * \return false 
+ */
+bool MC34X9IsFIFOEmpty(MC34X9* const dev);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \return MC34X9Accel 
+ */
+MC34X9Accel MC34X9ReadRawAccel(MC34X9* const dev);
+
+/**
+ * \brief 
+ * 
+ * \param threshold
+ */
+uint16_t MC34X6SetTFThreshold(MC34X9* const dev, const uint16_t threshold);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param debounce
+ */
+uint16_t MC34X6SetTFDebounce(MC34X9* const dev, const uint8_t debounce);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param threshold
+ */
+uint16_t MC34X6SetANYMThreshold(MC34X9* const dev, const uint16_t threshold);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param debounce
+ */
+uint16_t MC34X6SetANYMDebounce(MC34X9* const dev, const uint8_t debounce);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param threshold
+ */
+uint16_t MC34X6SetShakeThreshold(MC34X9* const dev, const uint16_t threshold);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param threshold
+ * \param shakeCount
+ */
+uint16_t MC34X6SetShakeP2PDurThresh(MC34X9* const dev, const uint16_t threshold, const uint8_t shakeCount);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param threshold
+ */
+uint16_t MC34X6SetTilt35Threshold(MC34X9* const dev, const uint16_t threshold);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ * \param timer
+ */
+uint16_t MC34X6SetTILT35Timer(MC34X9* const dev, const uint8_t timer);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ */
+uint16_t MC34X6SetTiltFlip(MC34X9* const dev);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ */
+uint16_t MC34X6SetAnym(MC34X9* const dev);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ */
+uint16_t MC34X6SetShake(MC34X9* const dev);
+
+/**
+ * \brief 
+ * 
+ * \param dev
+ */
+uint16_t MC34X6SetTilt35(MC34X9* const dev);
+
 #endif
